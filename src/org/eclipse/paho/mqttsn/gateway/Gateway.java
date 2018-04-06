@@ -44,15 +44,9 @@ public class Gateway {
 
 
 	public void start(String fileName){
-		DateFormat dFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
 
-		System.out.println();
-		System.out.println(dFormat.format(new Date())+ 
-				"  INFO:  -------- MQTT-SN Gateway starting --------");
-
-		//load the gateway parameters from a file		
-		System.out.println(dFormat.format(new Date())+ 
-				"  INFO:  Loading MQTT-SN Gateway parameters from " + fileName + " ... ");
+		GatewayLogger.info("-------- MQTT-SN Gateway starting --------");
+		GatewayLogger.info("Loading MQTT-SN Gateway parameters from " + fileName + " ... ");
 		try {
 			ConfigurationParser.parseFile(fileName);
 		} catch (MqttsException e) {

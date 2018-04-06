@@ -17,89 +17,32 @@
 package org.eclipse.paho.mqttsn.gateway.utils;
 
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import org.eclipse.paho.mqttsn.gateway.exceptions.MqttsException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 public class GatewayLogger {
-	
-	public final static int INFO  = 1;
-	public final static int WARN  = 2;
-	public final static int ERROR = 3;
-	
-	private static int LOG_LEVEL = INFO;
-	
 
-	public static void info(String msg) {
-		DateFormat dFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
-		System.out.println(dFormat.format(new Date())+ "  INFO:  " + msg);
-		if(printWriter != null){
-			printWriter.println(dFormat.format(new Date())+ "  INFO:  " + msg);
-			printWriter.flush();
-		}			
-	}
-	
-	public static void warn(String msg) {
-		DateFormat dFormat= new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
-		System.err.println(dFormat.format(new Date())+ "  WARN:  "+ msg);
-		if(printWriter != null){
-			printWriter.println(dFormat.format(new Date())+ "  WARN:  "+ msg);
-			printWriter.flush();
-		}
-	}
+  public final static int INFO = Level.INFO.toInt();
+  public final static int WARN = Level.WARN.toInt();
+  public final static int ERROR = Level.ERROR.toInt();
 
-	public static void error(String msg) {	
-		DateFormat dFormat= new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
-		System.err.println(dFormat.format(new Date())+ "  ERROR: " + msg);
-		if(printWriter != null){
-			printWriter.println(dFormat.format(new Date())+ "  ERROR: " + msg);
-			printWriter.flush();
-		}
-	}
+  private static final Logger logger = Logger.getLogger(GatewayLogger.class);
 
-	
-	public static void log(int logLevel, String msg) {
-		if(logLevel >= LOG_LEVEL) {			
-			switch (logLevel){
-				case INFO:
-					info(msg);
-					break;
-				case WARN:
-					warn(msg);
-					break;
-				case ERROR:
-					error(msg);
-					break;
-				default:
-			}
-		}
-	}
 
-	
-	public static void setLogLevel(int logLevel) {
-		LOG_LEVEL = logLevel;
-	}
-	
-	
-	private static FileWriter fileWriter;
-	private static PrintWriter printWriter;
-	
-	public static void setLogFile(String file) throws MqttsException {
-		DateFormat dFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss z");
-		try {
-			fileWriter = new FileWriter(file);
-			printWriter = new PrintWriter(fileWriter);
-			printWriter.println();
-			printWriter.println(dFormat.format(new Date())+ "  INFO:  -----------------------------------------Mqtts Gateway starting----------------------------------------");
-			printWriter.println(dFormat.format(new Date())+ "  INFO:  Loading Mqtts Gateway parameters....");
-		} catch(IOException e) {
-			e.printStackTrace();
-			throw new MqttsException (e.getMessage());
-		}
-	}
+  public static void info(String msg) {
+    logger.info(msg);
+  }
+
+  public static void warn(String msg) {
+    logger.warn(msg);
+  }
+
+  public static void error(String msg) {
+    logger.error(msg);
+  }
+
+  public static void log(int logLevel, String msg) {
+    logger.log(Level.toLevel(logLevel), msg);
+  }
+
 }

@@ -40,39 +40,8 @@ public class ConfigurationParser {
 			Properties pr = new Properties();
 			pr.load(stream);
 			
-			
+
 			//load from configuration file the data related to the gateway
-			
-			int logLevel;
-			String level = pr.getProperty("logLevel");
-			if (level == null)
-				throw new MqttsException("There is no log level defined");
-			if(level.equalsIgnoreCase("INFO"))
-				logLevel = GatewayLogger.INFO;
-			else if(level.equalsIgnoreCase("WARN"))
-				logLevel = GatewayLogger.WARN;
-			else if(level.equalsIgnoreCase("ERROR"))
-				logLevel = GatewayLogger.ERROR;
-			else
-				logLevel = GatewayLogger.INFO;
-			
-			GatewayLogger.setLogLevel(logLevel);
-				
-			String logDir = pr.getProperty("logDir");
-			if (logDir == null)
-				logDir = "log";
-			
-			boolean exists = new File (logDir).exists();
-			if (!exists){
-				boolean ok = (new File(logDir)).mkdir();
-		    	if (!ok) 
-		    		throw new MqttsException("Cannot create log directory.");
-			}
-			
-			String logFile = pr.getProperty("logFile");
-			if (logFile == null)
-				logFile = "mqtts_gateway.log";
-			GatewayLogger.setLogFile(logDir+"/"+logFile);
 							
 			String spr = pr.getProperty("predfTopicIdSize");
 			if(spr == null)
