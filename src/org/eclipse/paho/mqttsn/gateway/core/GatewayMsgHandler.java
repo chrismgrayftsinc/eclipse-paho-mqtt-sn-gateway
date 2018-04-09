@@ -64,18 +64,18 @@ public class GatewayMsgHandler extends MsgHandler{
 
 
 	/**
-	 * 
+	 *
 	 */
 	public GatewayMsgHandler(GatewayAddress addr) {
 		this.gatewayAddress = addr;
 	}
 
-	public void initialize(){			
+	public void initialize(){
 		brokerInterface = new TCPBrokerInterface(this.gatewayAddress);
 		timer = TimerService.getInstance();
 		dispatcher = Dispatcher.getInstance();
 		topicIdMappingTable = new TopicMappingTable();
-		topicIdMappingTable.initialize();		
+		topicIdMappingTable.initialize();
 		clientId = "Gateway_" + GWParameters.getGwId();
 
 		GatewayLogger.info("GatewayMsgHandler ["+
@@ -83,7 +83,7 @@ public class GatewayMsgHandler extends MsgHandler{
 				"]/["+clientId+"] - Establishing TCP/IP connection with "+
 				GWParameters.getBrokerURL());
 
-		//open a new TCP/IP connection with the broker 
+		//open a new TCP/IP connection with the broker
 		try {
 			brokerInterface.initialize();
 		} catch (MqttsException e) {
@@ -94,7 +94,7 @@ public class GatewayMsgHandler extends MsgHandler{
 					GWParameters.getBrokerURL()+ ". Gateway cannot start.");
 			System.exit(1);
 
-		}		
+		}
 		GatewayLogger.info("GatewayMsgHandler ["+
 				Utils.hexString(GWParameters.getGatewayAddress().getAddress())+
 				"]/["+clientId+"] - TCP/IP connection established.");
@@ -106,7 +106,7 @@ public class GatewayMsgHandler extends MsgHandler{
 	/****************************************************************************************/
 
 	public void handleMqttsMessage(MqttsMessage receivedMsg){
-		//get the type of the Mqtts message and handle the message according to that type	
+		//get the type of the Mqtts message and handle the message according to that type
 		switch(receivedMsg.getMsgType()){
 		case MqttsMessage.ADVERTISE:
 			handleMqttsAdvertise((MqttsAdvertise) receivedMsg);
@@ -118,22 +118,22 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		case MqttsMessage.GWINFO:
 			handleMqttsGWInfo((MqttsGWInfo) receivedMsg);
-			break;				
+			break;
 
 		case MqttsMessage.CONNECT:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.CONNACK:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.WILLTOPICREQ:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.WILLTOPIC:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.WILLMSGREQ:
@@ -141,15 +141,15 @@ public class GatewayMsgHandler extends MsgHandler{
 			break;
 
 		case MqttsMessage.WILLMSG:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.REGISTER:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.REGACK:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.PUBLISH:
@@ -157,31 +157,31 @@ public class GatewayMsgHandler extends MsgHandler{
 			break;
 
 		case MqttsMessage.PUBACK:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.PUBCOMP:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.PUBREC:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.PUBREL:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.SUBSCRIBE:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.SUBACK:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.UNSUBSCRIBE:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.UNSUBACK:
@@ -189,26 +189,26 @@ public class GatewayMsgHandler extends MsgHandler{
 			break;
 
 		case MqttsMessage.PINGREQ:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.PINGRESP:
-			//we will never receive such a message 
-			break;			
+			//we will never receive such a message
+			break;
 
 		case MqttsMessage.DISCONNECT:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.WILLTOPICUPD:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case MqttsMessage.WILLTOPICRESP:
 			//we will never receive such a message
 			break;
 
-		case MqttsMessage.WILLMSGUPD: 
+		case MqttsMessage.WILLMSGUPD:
 			//we will never receive such a message
 			break;
 
@@ -234,14 +234,14 @@ public class GatewayMsgHandler extends MsgHandler{
 	/**
 	 * @param receivedMsg
 	 */
-	private void handleMqttsSearchGW(MqttsSearchGW receivedMsg) {		
+	private void handleMqttsSearchGW(MqttsSearchGW receivedMsg) {
 		//		GatewayLogger.log(GatewayLogger.INFO, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Mqtts SEARCHGW message with \"Radius\" = \""+receivedMsg.getRadius()+"\" received.");
 
 		//construct a Mqtts GWINFO message for the reply to the received Mqtts SEARCHGW message
 		MqttsGWInfo msg = new MqttsGWInfo();
 		msg.setGwId(GWParameters.getGwId());
 
-		//get the broadcast radius 
+		//get the broadcast radius
 		byte radius = (byte)receivedMsg.getRadius();
 
 		//broadcast the Mqtts GWINFO message to the network
@@ -251,7 +251,7 @@ public class GatewayMsgHandler extends MsgHandler{
 		for(int i = 0; i < interfaces.size(); i++){
 			ClientInterface inter = (ClientInterface) interfaces.get(i);
 			inter.broadcastMsg(radius, msg);
-		}		
+		}
 	}
 
 	/**
@@ -289,7 +289,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 			//if the TopicIdType is a shortTopicName then simply copy it to the topicName field of the Mqtt PUBLISH message
 		case MqttsMessage.SHORT_TOPIC_NAME:
-			publish.setTopicName(receivedMsg.getShortTopicName());	
+			publish.setTopicName(receivedMsg.getShortTopicName());
 			break;
 
 			//if the TopicIdType is a predifinedTopiId
@@ -297,7 +297,7 @@ public class GatewayMsgHandler extends MsgHandler{
 			if(receivedMsg.getTopicId() > GWParameters.getPredfTopicIdSize()){
 				GatewayLogger.log(GatewayLogger.WARN, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Predefined topicId (\"" + receivedMsg.getTopicId() + "\") of the received Mqtts PUBLISH message is out of the range of predefined topic Ids [1,"+GWParameters.getPredfTopicIdSize()+"]. The message cannot be processed.");
 				return;
-			}				
+			}
 
 			//get the predefined topic name that corresponds to the received predefined topicId
 			String topicName = topicIdMappingTable.getTopicName(receivedMsg.getTopicId());
@@ -312,10 +312,10 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		default:
 			GatewayLogger.log(GatewayLogger.WARN, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Unknown topicIdType (\"" + receivedMsg.getTopicIdType()+"\"). The received Mqtts PUBLISH message cannot be processed.");
-			return;	
+			return;
 		}
 
-		//populate the Mqtt PUBLISH message 
+		//populate the Mqtt PUBLISH message
 		publish.setDup(false);
 
 		//set QoS = 0
@@ -346,7 +346,7 @@ public class GatewayMsgHandler extends MsgHandler{
 	 * @param receivedMsg
 	 */
 	public void handleMqttMessage(MqttMessage receivedMsg){
-		//get the type of the Mqtt message and handle the message according to that type	
+		//get the type of the Mqtt message and handle the message according to that type
 		switch(receivedMsg.getMsgType()){
 		case MqttMessage.CONNECT:
 			//we will never receive such a message from the broker
@@ -378,7 +378,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		case MqttMessage.SUBSCRIBE:
 			//we will never receive such a message from the broker
-			break;				
+			break;
 
 		case MqttMessage.SUBACK:
 			handleMqttSuback((MqttSuback) receivedMsg);
@@ -448,7 +448,7 @@ public class GatewayMsgHandler extends MsgHandler{
 			String token = st.nextToken();
 			String clInte = token.substring(1, token.length()-1);
 			ClientInterface inter = null;
-			try {				
+			try {
 				Class<?> cl = Class.forName(clInte);
 				inter = (ClientInterface)cl.newInstance();
 				inter.initialize();
@@ -458,7 +458,7 @@ public class GatewayMsgHandler extends MsgHandler{
 			}catch (IllegalAccessException e) {
 				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
 				e.printStackTrace();
-			}catch (InstantiationException e) {					
+			}catch (InstantiationException e) {
 				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
 				e.printStackTrace();
 			}catch (ClassNotFoundException e) {
@@ -468,7 +468,7 @@ public class GatewayMsgHandler extends MsgHandler{
 				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to initialize "+ inter.getClass().getName());
 				e.printStackTrace();
 			}
-		}	
+		}
 
 		if(!init){
 			GatewayLogger.error("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to initialize at least one Client interface.Gateway cannot start.");
@@ -489,6 +489,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		//set a keep alive timer for sending subsequent Mqtt PINGREQ messages to the broker
 		timer.register(gatewayAddress, ControlMessage.SEND_KEEP_ALIVE_MSG, GWParameters.getKeepAlivePeriod());
+		timer.register(gatewayAddress, ControlMessage.ADVERTISE, (int) GWParameters.getAdvPeriod());
 	}
 
 
@@ -590,44 +591,48 @@ public class GatewayMsgHandler extends MsgHandler{
 	 * @param receivedMsg
 	 */
 	public void handleControlMessage(ControlMessage receivedMsg){
-		//get the type of the Control message and handle the message according to that type	
+		//get the type of the Control message and handle the message according to that type
 		switch(receivedMsg.getMsgType()){
 		case ControlMessage.CONNECTION_LOST:
 			connectionLost();
-			break;	
+			break;
 
 		case ControlMessage.WAITING_WILLTOPIC_TIMEOUT:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case ControlMessage.WAITING_WILLMSG_TIMEOUT:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case ControlMessage.WAITING_REGACK_TIMEOUT:
-			//we will never receive such a message 
+			//we will never receive such a message
 			break;
 
 		case ControlMessage.CHECK_INACTIVITY:
 			//ignore it
-			break;	
+			break;
 
 		case ControlMessage.SEND_KEEP_ALIVE_MSG:
 			handleControlKeepAlive();
-			break;		
+			break;
+
+    case ControlMessage.ADVERTISE:
+      sendMqttsAdvertise();
+      break;
 
 		case ControlMessage.SHUT_DOWN:
 			shutDown();
-			break;			
+			break;
 
 		default:
 			GatewayLogger.log(GatewayLogger.WARN, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Control message of unknown type \"" + receivedMsg.getMsgType()+"\" received.");
 			break;
 		}
-	}	
+	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void connectionLost(){
 		GatewayLogger.log(GatewayLogger.INFO, "GatewayMsgHandler ["+
@@ -638,14 +643,14 @@ public class GatewayMsgHandler extends MsgHandler{
 				Utils.hexString(GWParameters.getGatewayAddress().getAddress())+
 				"]/["+clientId+"] - TCP/IP connection with the broker was lost.");
 
-		if (this.connected){	
+		if (this.connected){
 
 			//close the connection with the broker (if any)
 			brokerInterface.disconnect();
 
 			this.connected = false;
 
-			//generate a control message 
+			//generate a control message
 			ControlMessage controlMsg = new ControlMessage();
 			controlMsg.setMsgType(ControlMessage.SHUT_DOWN);
 
@@ -654,7 +659,7 @@ public class GatewayMsgHandler extends MsgHandler{
 			Message msg = new Message(null);
 			msg.setType(Message.CONTROL_MSG);
 			msg.setControlMessage(controlMsg);
-			this.dispatcher.putMessage(msg);	
+			this.dispatcher.putMessage(msg);
 		}else{
 			GatewayLogger.error("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to establish Mqtt connection with the broker.Gateway cannot start.");
 			System.exit(1);
@@ -664,7 +669,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 
 	/**
-	 * 
+	 *
 	 */
 	private void handleControlKeepAlive() {
 		//		GatewayLogger.log(GatewayLogger.INFO, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Control SEND_KEEP_ALIVE_MSG message received.");
@@ -672,28 +677,20 @@ public class GatewayMsgHandler extends MsgHandler{
 		//send a Mqtts PINGREQ to the broker
 		sendMqttPingReq();
 
-		//update the advertising period counter
-		advPeriodCounter = advPeriodCounter + GWParameters.getKeepAlivePeriod();
-		if (advPeriodCounter >= GWParameters.getAdvPeriod()){
-			//broadcast the Mqtts ADVERTISE message to the network
-			sendMqttsAdvertise();
-			advPeriodCounter = 0;
-		}
-
 		//update the clean up period counter
 		checkingCounter = checkingCounter + GWParameters.getKeepAlivePeriod();
 		if(checkingCounter >= GWParameters.getCkeckingPeriod ()){
 			//send a check timeout message to all ClientMsgHandlers
-			sendCheckInactivity();	
+			sendCheckInactivity();
 			checkingCounter = 0;
-		}		
+		}
 	}
 
 
 	/**
-	 * 
+	 *
 	 */
-	private void shutDown() {		
+	private void shutDown() {
 		GatewayLogger.log(GatewayLogger.INFO, "GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Control SHUT_DOWN message received.");
 
 		//stop the reading thread of the BrokerInterface (if any)
@@ -714,7 +711,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		//close the connection with the broker
 		brokerInterface.disconnect();
-	}	
+	}
 
 
 	/******************************************************************************************/
@@ -722,24 +719,24 @@ public class GatewayMsgHandler extends MsgHandler{
 	/****************************************************************************************/
 
 	/**
-	 * @throws MqttsException 
-	 * 
+	 * @throws MqttsException
+	 *
 	 */
 	public void connect() {
 		//construct a new Mqtt CONNECT message
-		MqttConnect mqttConnect = new MqttConnect();		
+		MqttConnect mqttConnect = new MqttConnect();
 		mqttConnect.setProtocolName(GWParameters.getProtocolName());
 		mqttConnect.setProtocolVersion (GWParameters.getProtocolVersion());
 		mqttConnect.setWillRetain (GWParameters.isRetain());
 		mqttConnect.setWillQoS (GWParameters.getWillQoS());
-		mqttConnect.setWill (GWParameters.isWillFlag());	
+		mqttConnect.setWill (GWParameters.isWillFlag());
 		mqttConnect.setCleanStart (GWParameters.isCleanSession());
 		mqttConnect.setKeepAlive(GWParameters.getKeepAlivePeriod());
 		mqttConnect.setClientId (clientId);
 		mqttConnect.setWillTopic (GWParameters.getWillTopic());
 		mqttConnect.setWillMessage (GWParameters.getWillMessage());
 
-		//		GatewayLogger.info("** will= " + mqttConnect.isWill() + 
+		//		GatewayLogger.info("** will= " + mqttConnect.isWill() +
 		//				" willTopic= " + mqttConnect.getWillTopic() +
 		//				", willMessage= " + mqttConnect.getWillMessage());
 
@@ -762,7 +759,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 
 	/**
-	 * 
+	 *
 	 */
 	private void sendMqttPingReq() {
 		//construct a Mqtt PINGREQ message
@@ -773,16 +770,16 @@ public class GatewayMsgHandler extends MsgHandler{
 		//send the Mqtt PINGREQ message to the broker
 		try {
 			brokerInterface.sendMsg(pingreq);
-		} catch (MqttsException e) {			
+		} catch (MqttsException e) {
 			e.printStackTrace();
-			GatewayLogger.error("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed sending Mqtts PINGREQ message to the broker.");			
+			GatewayLogger.error("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed sending Mqtts PINGREQ message to the broker.");
 			connectionLost();
-		}				
+		}
 	}
 
 
 	/**
-	 * 
+	 *
 	 */
 	private void sendMqttsAdvertise() {
 		MqttsAdvertise adv = new MqttsAdvertise();
@@ -798,13 +795,13 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		GatewayLogger.info("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Mqtts ADVERTISE message was broadcasted to the network.");
 	}
-	
-	
+
+
 	/**
-	 * 
+	 *
 	 */
 	private void sendCheckInactivity() {
-		//generate a control message 
+		//generate a control message
 		ControlMessage controlMsg = new ControlMessage();
 		controlMsg.setMsgType(ControlMessage.CHECK_INACTIVITY);
 
@@ -816,7 +813,7 @@ public class GatewayMsgHandler extends MsgHandler{
 
 		msg.setType(Message.CONTROL_MSG);
 		msg.setControlMessage(controlMsg);
-		this.dispatcher.putMessage(msg);		
+		this.dispatcher.putMessage(msg);
 	}
 
 	/**

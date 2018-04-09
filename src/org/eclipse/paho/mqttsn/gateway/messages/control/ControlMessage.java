@@ -26,6 +26,7 @@ public class ControlMessage {
 	public static final int CHECK_INACTIVITY			= 5;
 	public static final int SEND_KEEP_ALIVE_MSG			= 6;
 	public static final int SHUT_DOWN					= 7;
+	public static final int ADVERTISE = 8;
 
 	public ControlMessage(){}
 
