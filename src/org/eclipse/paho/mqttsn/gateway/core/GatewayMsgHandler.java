@@ -676,7 +676,7 @@ public class GatewayMsgHandler extends MsgHandler{
 		advPeriodCounter = advPeriodCounter + GWParameters.getKeepAlivePeriod();
 		if (advPeriodCounter >= GWParameters.getAdvPeriod()){
 			//broadcast the Mqtts ADVERTISE message to the network
-//			sendMqttsAdvertise();			
+			sendMqttsAdvertise();
 			advPeriodCounter = 0;
 		}
 
@@ -784,20 +784,20 @@ public class GatewayMsgHandler extends MsgHandler{
 	/**
 	 * 
 	 */
-//	private void sendMqttsAdvertise() {
-//		MqttsAdvertise adv = new MqttsAdvertise();
-//		adv.setGwId(GWParameters.getGwId());
-//		adv.setDuration(GWParameters.getAdvPeriod());
-//		
-//		//broadcast the message to all available interfaces
-//		Vector interfaces = GWParameters.getClientInterfaces();
-//		for(int i = 0; i < interfaces.size(); i++){
-//			ClientInterface inter = (ClientInterface) interfaces.get(i);
-//			inter.broadcastMsg(adv);
-//		}	
-//		
-//		GatewayLogger.info("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Mqtts ADVERTISE message was broadcasted to the network.");
-//	}
+	private void sendMqttsAdvertise() {
+		MqttsAdvertise adv = new MqttsAdvertise();
+		adv.setGwId(GWParameters.getGwId());
+		adv.setDuration(GWParameters.getAdvPeriod());
+
+		//broadcast the message to all available interfaces
+		Vector interfaces = GWParameters.getClientInterfaces();
+		for(int i = 0; i < interfaces.size(); i++){
+			ClientInterface inter = (ClientInterface) interfaces.get(i);
+			inter.broadcastMsg(adv);
+		}
+
+		GatewayLogger.info("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Mqtts ADVERTISE message was broadcasted to the network.");
+	}
 	
 	
 	/**
