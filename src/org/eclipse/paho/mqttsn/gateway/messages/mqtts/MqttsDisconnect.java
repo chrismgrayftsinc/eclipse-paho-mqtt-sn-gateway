@@ -66,4 +66,8 @@ public class MqttsDisconnect extends MqttsMessage {
 		}
 		return data;
 	}
+
+	public int getSleepDuration() {
+	  return sleepDuration;
+  }
 }
