@@ -74,6 +74,7 @@ import org.eclipse.paho.mqttsn.gateway.utils.Utils;
  * that corresponds to a certain client, is handled by this object.
  *
  */
+@SuppressWarnings("Duplicates")
 public class ClientMsgHandler extends MsgHandler{
 
 	//the unique address of the client that distinguishes this object
@@ -99,7 +100,7 @@ public class ClientMsgHandler extends MsgHandler{
 	private Dispatcher dispatcher = null;
 
 	//class that represents the state of the client at any given time
-	private ClientState client = null;
+	private ClientState client;
 
 	//class that represents the state of the gateway (actually this handler's state) at any given time
 	private GatewayState gateway = null;
@@ -156,7 +157,7 @@ public class ClientMsgHandler extends MsgHandler{
 		topicIdMappingTable = new TopicMappingTable();
 		topicIdMappingTable.initialize();
 		timeout = 0;
-		client = new ClientState();
+		client = ClientState.NOT_CONNECTED;
 		gateway = new GatewayState();
 		msgId = 1;
 		topicId = GWParameters.getPredfTopicIdSize()+1;
@@ -323,7 +324,7 @@ public class ClientMsgHandler extends MsgHandler{
 		brokerInterface.setClientId(clientId);
 
 		//if the client is already connected return a Mqtts CONNACK 
-		if(client.isConnected()){
+		if(client == ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is already connected. Mqtts CONNACK message will be send to the client.");
 			MqttsConnack connack = new MqttsConnack();
 			connack.setReturnCode(MqttsMessage.RETURN_CODE_ACCEPTED);
@@ -369,7 +370,7 @@ public class ClientMsgHandler extends MsgHandler{
 			}
 
 			//set the state of the client as "Connected"
-			client.setConnected();
+			client = ClientState.CONNECTED;
 			return;
 		}
 
@@ -495,7 +496,7 @@ public class ClientMsgHandler extends MsgHandler{
 		}
 
 		//set the state of the client as "Connected"
-		client.setConnected();
+		client = ClientState.CONNECTED;
 
 		//delete the stored Mqtts CONNECT and Mqtts WILLTOPIC messages
 		this.mqttsConnect = null;
@@ -512,7 +513,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts REGISTER message with \"TopicName\" = \"" +receivedMsg.getTopicName()+"\" received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts REGISTER message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -545,7 +546,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts REGACK message with \"TopicId\" = \"" +receivedMsg.getTopicId()+"\" received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts REGACK message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -655,7 +656,7 @@ public class ClientMsgHandler extends MsgHandler{
 		}
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PUBLISH message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -799,7 +800,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PUBACK message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PUBACK message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -838,7 +839,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PUBCOMP message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PUBCOMP message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -870,7 +871,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PUBREC message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PUBREC message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -902,7 +903,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PUBREL message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PUBREL message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -944,7 +945,7 @@ public class ClientMsgHandler extends MsgHandler{
 
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts SUBSCRIBE message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -1067,7 +1068,7 @@ public class ClientMsgHandler extends MsgHandler{
 
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts UNSUBSCRIBE message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -1151,7 +1152,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PINGREQ message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PINGREQ message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -1182,7 +1183,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts PINGRESP message received.");
 
 		//if the client is not in state "Connected" send to it a Mqtts DISCONNECT message and return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts PINGRESP message cannot be processed.");
 			sendClientDisconnect();
 			return;
@@ -1213,7 +1214,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtts DISCONNECT message received.");
 
 		//if the client is not in state "Connected" return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtts DISCONNECT message cannot be processed.");
 			return;
 		}
@@ -1236,6 +1237,10 @@ public class ClientMsgHandler extends MsgHandler{
 
 		//call sendClientDisconnect method of this handler
 		sendClientDisconnect();
+	}
+
+	private void handleSleep(int sleepDuration) {
+
 	}
 
 
@@ -1345,7 +1350,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt CONNACK message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt CONNACK message cannot be processed.");
 			return;
 		}
@@ -1376,7 +1381,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PUBLISH message with \"QoS\" = \""+receivedMsg.getQos()+ "\" and \"TopicName\" = \""+receivedMsg.getTopicName()+"\" received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PUBLISH message cannot be processed.");
 			return;
 		}
@@ -1489,7 +1494,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PUBACK message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PUBACK message cannot be processed.");
 			return;
 		}		
@@ -1571,7 +1576,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PUBREC message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PUBREC message cannot be processed.");
 			return;
 		}
@@ -1595,7 +1600,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PUBREL message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PUBREL message cannot be processed.");
 			return;
 		}
@@ -1620,7 +1625,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PUBCOMP message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PUBCOMP message cannot be processed.");
 			return;
 		}
@@ -1644,7 +1649,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt SUBACK message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt SUBACK message cannot be processed.");
 			return;
 		}
@@ -1752,7 +1757,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt UNSUBACK message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt UNSUBACK message cannot be processed.");
 			return;
 		}
@@ -1808,7 +1813,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PINGREQ message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PINGREQ message cannot be processed.");
 			return;
 		}
@@ -1831,7 +1836,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Mqtt PINGRESP message received.");
 
 		//if the client is not in state "Connected" drop the received message
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Mqtt PINGRESP message cannot be processed.");
 			return;
 		}
@@ -1898,7 +1903,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Control CONNECTION_LOST message received.");
 
 		//if the client is not in state "Connected" return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The call on connectionLost() method has no effect.");
 			return;
 		}
@@ -2050,7 +2055,7 @@ public class ClientMsgHandler extends MsgHandler{
 		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Control SHUT_DOWN message received.");
 
 		//if the client is not in state "Connected" return
-		if(!client.isConnected()){
+		if(client != ClientState.CONNECTED){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is not connected. The received Control SHUT_DOWN message cannot be processed.");
 			return;
 		}
@@ -2101,7 +2106,7 @@ public class ClientMsgHandler extends MsgHandler{
 		clientInterface.sendMsg(this.clientAddress, mqttsDisconnect);
 
 		//set the state of the client to "Disconnected"
-		client.setDisconnected();
+    client = ClientState.DISCONNECTED;
 
 		//remove timer registrations (if any)
 		timer.unregister(this.clientAddress);
@@ -2134,47 +2139,9 @@ public class ClientMsgHandler extends MsgHandler{
 	}
 
 
-	/**
-	 * The class that represents the state of the client at any given time.
-	 *
-	 */
-	private class ClientState {
-
-		private final int NOT_CONNECTED = 1;
-		private final int CONNECTED 	= 2;
-		private final int DISCONNECTED 	= 3;
-
-		private int state;
-
-		public ClientState(){
-			state = NOT_CONNECTED;
-		}
-
-//		public boolean isNotConnected() {
-//			return (state == NOT_CONNECTED);
-//		}
-
-//		public void setNotConnected() {
-//			state = NOT_CONNECTED;
-//		}
-
-		public boolean isConnected() {
-			return (state == CONNECTED);
-		}
-
-		public void setConnected() {
-			state = CONNECTED;
-		}
-
-//		public boolean isDisconnected() {
-//			return (state == DISCONNECTED);
-//		}
-
-		public void setDisconnected() {
-			state = DISCONNECTED;
-		}
+	private enum ClientState {
+		NOT_CONNECTED, CONNECTED, DISCONNECTED, ASLEEP
 	}
-
 
 	/**
 	 * The class that represents the state of the gateway at any given time.
