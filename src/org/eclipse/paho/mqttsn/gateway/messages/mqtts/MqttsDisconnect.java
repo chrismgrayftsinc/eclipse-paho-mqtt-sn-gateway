@@ -18,36 +18,52 @@ package org.eclipse.paho.mqttsn.gateway.messages.mqtts;
 
 /**
  * This object represents a Mqtts DISCONNECT message.
- * 
+ *
  *
  */
 public class MqttsDisconnect extends MqttsMessage {
-	
+
+	private int sleepDuration;
+
 	/**
-	 * MqttsDisconnect constructor.Sets the appropriate message type. 
+	 * MqttsDisconnect constructor.Sets the appropriate message type.
 	 */
 	public MqttsDisconnect() {
 		msgType = MqttsMessage.DISCONNECT;
 	}
-	
+
 	/**
-	 * MqttsDisconnect constructor.Sets the appropriate message type and constructs 
+	 * MqttsDisconnect constructor.Sets the appropriate message type and constructs
 	 * a Mqtts DISCONNECT message from a received byte array.
+   *
 	 * @param data: The buffer that contains the DISCONNECT message.
 	 */
 	public MqttsDisconnect(byte[] data) {
 		msgType = MqttsMessage.DISCONNECT;
+		if (data.length == 4) {
+			sleepDuration = data[2] << 8;
+			sleepDuration += data[3];
+		}
 	}
-	
+
+	public MqttsDisconnect(int sleepDuration) {
+	  this.sleepDuration = sleepDuration;
+  }
+
 	/**
 	 * Method to convert this message to a byte array for transmission.
+   *
 	 * @return A byte array containing the DISCONNECT message as it should appear on the wire.
-	 */	
+	 */
 	public byte[] toBytes() {
 		int length = 2;
 		byte[] data = new byte[length];
-		data[0] = (byte)length;
-		data[1] = (byte)msgType;		
+		data[0] = (byte) length;
+		data[1] = (byte) msgType;
+		if (sleepDuration > 0) {
+			data[2] = (byte) ((sleepDuration >> 8) & 0xFF);
+			data[3] = (byte) (sleepDuration & 0xFF);
+		}
 		return data;
 	}
 }
