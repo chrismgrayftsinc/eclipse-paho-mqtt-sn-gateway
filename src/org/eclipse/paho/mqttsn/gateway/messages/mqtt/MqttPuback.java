@@ -30,8 +30,9 @@ public class MqttPuback extends MqttMessage{
 	/**
 	 * MqttPuback constructor.Sets the appropriate message type. 
 	 */
-	public MqttPuback() {
+	public MqttPuback(int msgId) {
 		msgType = MqttMessage.PUBACK;
+		this.msgId = msgId;
 	}
 
 	/**

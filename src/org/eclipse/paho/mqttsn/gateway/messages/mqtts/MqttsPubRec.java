@@ -30,8 +30,9 @@ public class MqttsPubRec extends MqttsMessage {
 	/**
 	 * MqttsPubrec constructor.Sets the appropriate message type. 
 	 */
-	public MqttsPubRec() {
+	public MqttsPubRec(int msgId) {
 		msgType = MqttsMessage.PUBREC;
+		this.msgId = msgId;
 	}
 	
 	/**

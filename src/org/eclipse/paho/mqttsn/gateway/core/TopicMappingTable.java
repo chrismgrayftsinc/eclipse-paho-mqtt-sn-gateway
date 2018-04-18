@@ -23,95 +23,89 @@ import org.eclipse.paho.mqttsn.gateway.utils.GWParameters;
 
 public class TopicMappingTable {
 
-	private Hashtable<Integer, String> topicIdTable;
+  private Hashtable<Integer, String> topicIdTable = new Hashtable<>();
 
-	public TopicMappingTable(){
-		topicIdTable = new Hashtable<Integer, String>();
-	}
+  public void initialize() {
+    Iterator<?> iter = GWParameters.getPredefTopicIdTable().keySet().iterator();
+    Iterator<?> iterVal = GWParameters.getPredefTopicIdTable().values().iterator();
 
+    Integer topicId;
+    String topicName;
+    while (iter.hasNext()) {
+      topicId = (Integer) iter.next();
+      topicName = (String) iterVal.next();
+      topicIdTable.put(topicId, topicName);
+    }
+  }
 
-	public void initialize() {
-		Iterator<?> iter = GWParameters.getPredefTopicIdTable().keySet().iterator();
-		Iterator<?> iterVal = GWParameters.getPredefTopicIdTable().values().iterator();
+  /**
+   * @param topicId
+   * @param topicName
+   */
+  public void assignTopicId(int topicId, String topicName) {
+    topicIdTable.put(new Integer(topicId), topicName);
+  }
 
-		Integer topicId;
-		String topicName;
-		while (iter.hasNext()) {
-			topicId = (Integer)iter.next();	
-			topicName = (String)iterVal.next();
-			topicIdTable.put(topicId, topicName);
-		}
-	}
+  public String getTopicName(int topicId) {
+    return topicIdTable.get(topicId);
+  }
 
-	/**
-	 * @param topicId
-	 * @param topicName
-	 */
-	public void assignTopicId(int topicId, String topicName) {
-		topicIdTable.put(new Integer (topicId), topicName);
-	}
+  /**
+   * @param topicName
+   * @return
+   */
+  public int getTopicId(String topicName) {
+    Iterator<Integer> iter = topicIdTable.keySet().iterator();
+    Iterator<String> iterVal = topicIdTable.values().iterator();
+    int ret = 0;
+    while (iter.hasNext()) {
+      int topicId = iter.next();
+      String tname = iterVal.next();
+      if (tname.equals(topicName)) {
+        ret = topicId;
+        break;
+      }
+    }
+    return ret;
+  }
 
-	public String getTopicName(int topicId) {
-		return (String)topicIdTable.get(new Integer(topicId));
-	}
-
-	/**
-	 * @param topicName
-	 * @return
-	 */
-	public int getTopicId(String topicName) {
-		Iterator<Integer> iter = topicIdTable.keySet().iterator();
-		Iterator<String> iterVal = topicIdTable.values().iterator();
-		Integer ret = new Integer(0);
-		while (iter.hasNext()) {
-			Integer topicId = (Integer)iter.next();			
-			String tname = (String)(iterVal.next());
-			if(tname.equals(topicName)) {
-				ret = topicId;
-				break;
-			}
-		}
-		return ret.intValue();
-	}
-
-	/**
-	 * @param topicId
-	 */
-	public void removeTopicId(int topicId) {
-		topicIdTable.remove(new Integer(topicId));		
-	}
+  /**
+   * @param topicId
+   */
+  public void removeTopicId(int topicId) {
+    topicIdTable.remove(topicId);
+  }
 
 
-	/**
-	 * @param topicName
-	 */
-	public void removeTopicId(String topicName) {
-		Iterator<Integer> iter = topicIdTable.keySet().iterator();
-		Iterator<String> iterVal = topicIdTable.values().iterator();
-		while (iter.hasNext()) {
-			Integer topicId = (Integer)iter.next();			
-			String tname = (String)(iterVal.next());
+  /**
+   * @param topicName
+   */
+  public void removeTopicId(String topicName) {
+    Iterator<Integer> iter = topicIdTable.keySet().iterator();
+    Iterator<String> iterVal = topicIdTable.values().iterator();
+    while (iter.hasNext()) {
+      int topicId = iter.next();
+      String tname = iterVal.next();
 
-			//don't remove predefined topic ids
-			if(tname.equals(topicName) && topicId.intValue() > GWParameters.getPredfTopicIdSize()) {
-				topicIdTable.remove(topicId);
-				break;
-			}
-		}
-	}
+      //don't remove predefined topic ids
+      if (tname.equals(topicName) && topicId > GWParameters.getPredfTopicIdSize()) {
+        topicIdTable.remove(topicId);
+        break;
+      }
+    }
+  }
 
 
-	/**
-	 * 
-	 * Utility method. Prints the content of this mapping table
-	 */
-	public void printContent(){
-		Iterator<Integer> iter = topicIdTable.keySet().iterator();
-		Iterator<String> iterVal = topicIdTable.values().iterator();
-		while (iter.hasNext()) {
-			Integer topicId = (Integer)iter.next();			
-			String tname = (String)(iterVal.next());
-			System.out.println(topicId+" = "+ tname);
-		}		
-	}
+  /**
+   * Utility method. Prints the content of this mapping table
+   */
+  public void printContent() {
+    Iterator<Integer> iter = topicIdTable.keySet().iterator();
+    Iterator<String> iterVal = topicIdTable.values().iterator();
+    while (iter.hasNext()) {
+      int topicId = iter.next();
+      String tname = iterVal.next();
+      System.out.println(topicId + " = " + tname);
+    }
+  }
 }

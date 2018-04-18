@@ -30,8 +30,9 @@ public class MqttPubComp extends MqttMessage{
 	/**
 	 * MqttPubcomp constructor.Sets the appropriate message type. 
 	 */
-	public MqttPubComp() {
+	public MqttPubComp(int msgId) {
 		msgType = MqttMessage.PUBCOMP;
+		this.msgId = msgId;
 	}
 
 	/**

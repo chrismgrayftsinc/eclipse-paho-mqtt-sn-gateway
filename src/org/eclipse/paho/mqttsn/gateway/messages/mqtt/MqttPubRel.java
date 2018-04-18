@@ -29,8 +29,9 @@ public class MqttPubRel extends MqttMessage{
 	/**
 	 * MqttPubRel constructor.Sets the appropriate message type. 
 	 */
-	public MqttPubRel() {
+	public MqttPubRel(int msgId) {
 		msgType = MqttMessage.PUBREL;
+		this.msgId = msgId;
 	}
 	
 	/**

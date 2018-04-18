@@ -29,8 +29,9 @@ public class MqttsUnsuback extends MqttsMessage{
 	/**
 	 * MqttsUnsuback constructor.Sets the appropriate message type. 
 	 */
-	public MqttsUnsuback() {
+	public MqttsUnsuback(int msgId) {
 		msgType = MqttsMessage.UNSUBACK;
+		this.msgId = msgId;
 	}
 	
 	/**

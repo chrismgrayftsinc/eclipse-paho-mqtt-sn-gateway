@@ -27,6 +27,8 @@ public class ControlMessage {
 	public static final int SEND_KEEP_ALIVE_MSG			= 6;
 	public static final int SHUT_DOWN					= 7;
 	public static final int ADVERTISE = 8;
+	public static final int SLEEP_TIMEOUT = 9;
+	public static final int SLEEP_SERVER_PING = 10;
 
 	public ControlMessage(){}
 

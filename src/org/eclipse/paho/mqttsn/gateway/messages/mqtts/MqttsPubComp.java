@@ -26,10 +26,8 @@ public class MqttsPubComp extends MqttsMessage {
 	//Mqtts PUBCOMP fields
 	private int msgId;
 
-	/**
-	 * MqttsPubcomp constructor.Sets the appropriate message type. 
-	 */
-	public MqttsPubComp() {
+	public MqttsPubComp(int msgId) {
+		this.msgId = msgId;
 		msgType = MqttsMessage.PUBCOMP;
 	}
 	

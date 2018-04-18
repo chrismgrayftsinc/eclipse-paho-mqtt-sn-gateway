@@ -244,7 +244,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 	/**
 	 * This method decodes the received Mqtts message and then constructs a 
 	 * general "internal" message {@link org.eclipse.paho.mqttsn.gateway.messages.Message}
-	 * which puts it to Dispatcher's queue {@link  org.eclipse.paho.mqttsn.gateway.core.Dispatcher.
+	 * which puts it to Dispatcher's queue {@link  org.eclipse.paho.mqttsn.gateway.core.Dispatcher}
 	 * 
 	 * @param data The received Mqtts packet.
 	 * @param address The address of the SA client.

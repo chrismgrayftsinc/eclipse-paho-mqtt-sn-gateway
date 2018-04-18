@@ -46,21 +46,21 @@ import org.eclipse.paho.mqttsn.gateway.utils.GatewayLogger;
 import org.eclipse.paho.mqttsn.gateway.utils.Utils;
 
 /**
- * This class represents the interface to the broker and is instantiated by the 
- * MessageHandler.Is is used for opening a TCP/IP connection with the broker 
+ * This class represents the interface to the broker and is instantiated by the
+ * MessageHandler.Is is used for opening a TCP/IP connection with the broker
  * and sending/receiving Mqtt Messages.
- * For the reading functionality a reading thread is created. 
- * For every client there is one instance of this class. 
- * 
+ * For the reading functionality a reading thread is created.
+ * For every client there is one instance of this class.
+ *
  * @see com.ibm.zurich.core.ClientMsgHandler
- * 
+ *
  * Parts of this code were imported from com.ibm.mqttdirect.modules.common.StreamDeframer.java
- * 
+ *
  *
  */
 public class TCPBrokerInterface implements BrokerInterface, Runnable {
 
-	private	DataInputStream	 streamIn	= null;		
+	private	DataInputStream	 streamIn	= null;
 	private	DataOutputStream streamOut	= null;
 	private Socket socket;
 
@@ -69,7 +69,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 	private int port;
 	private String clientId;
 
-	private volatile boolean running;	
+	private volatile boolean running;
 	private Thread readThread;
 
 	private Dispatcher dispatcher;
@@ -94,22 +94,22 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 	}
 
 	/**
-	 * This method opens the TCP/IP connection with the broker and creates 
+	 * This method opens the TCP/IP connection with the broker and creates
 	 * a new thread for reading from the socket.
-	 * 
-	 * @throws MqttsException 
+	 *
+	 * @throws MqttsException
 	 */
 	public void initialize() throws MqttsException{
 		try {
 			socket = new Socket(brokerURL, port);
 			streamIn = new DataInputStream(socket.getInputStream());
-			streamOut = new DataOutputStream(socket.getOutputStream());			
+			streamOut = new DataOutputStream(socket.getOutputStream());
 
 		} catch (UnknownHostException e) {
 			disconnect();
 			throw new MqttsException(e.getMessage());
 		} catch (IOException e) {
-			disconnect();			
+			disconnect();
 			throw new MqttsException(e.getMessage());
 		}
 
@@ -121,12 +121,12 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 
 
 	/**
-	 * This method sends a Mqtt message to the broker over the already established 
+	 * This method sends a Mqtt message to the broker over the already established
 	 * TCP/IP connection.Before that, converts the message to byte array calling
 	 * the method {@link org.eclipse.paho.mqttsn.gateway.messages.mqtt.MqttMessage#toBytes()}.
-	 * 
+	 *
 	 * @param message The MqttMessage to be send to the broker.
-	 * @throws MqttsException 
+	 * @throws MqttsException
 	 */
 	public void sendMsg(MqttMessage message) throws MqttsException{
 		// send the message over the TCP/IP socket
@@ -146,7 +146,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 	}
 
 	/**
-	 * This method is used for reading a Mqtt message from the socket.It blocks on the 
+	 * This method is used for reading a Mqtt message from the socket.It blocks on the
 	 * reading stream until a message arrives.
 	 */
 	public void readMsg(){
@@ -163,7 +163,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 		try{
 			int res = streamIn.read();
 			hdr.header[0]=(byte) res;
-			hdr.headerLength=1; 
+			hdr.headerLength=1;
 			if(res==-1) {
 				// if EOF detected
 				throw new EOFException();
@@ -187,12 +187,12 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 			if (hdr.headerLength > MAX_HDR_LENGTH || hdr.remainingLength > MAX_MSG_LENGTH || hdr.remainingLength < 0) {
 				GatewayLogger.log(GatewayLogger.WARN, "TCPBrokerInterface ["+Utils.hexString(this.address.getAddress())+"]/["+clientId+"] - Not a valid Mqtts message.");
 				return;
-			}			
+			}
 
-			body = new byte[hdr.remainingLength+hdr.headerLength]; 
+			body = new byte[hdr.remainingLength+hdr.headerLength];
 
 			for (int i = 0; i < hdr.headerLength; i++) {
-				body[i] = hdr.header[i]; 
+				body[i] = hdr.header[i];
 			}
 
 			if (hdr.remainingLength >= 0) {
@@ -208,20 +208,18 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			//end			
+			//end
 
 
 			if(body!=null)
 				decodeMsg(body);
 		}catch(IOException e){
-			if(e instanceof InterruptedIOException) {
-				//do nothing
-			}else if(this.running == true){
+			 if(!(e instanceof InterruptedIOException) && running){
 				//an error occurred
 				//stop the reading thread
 				this.running = false;
 
-				//generate a control message 
+				//generate a control message
 				ControlMessage controlMsg = new ControlMessage();
 				controlMsg.setMsgType(ControlMessage.CONNECTION_LOST);
 
@@ -232,7 +230,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 				msg.setControlMessage(controlMsg);
 				this.dispatcher.putMessage(msg);
 			}
-		} 
+		}
 	}
 
 	/**
@@ -301,7 +299,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 
 		default:
 			GatewayLogger.log(GatewayLogger.WARN, "TCPBrokerInterface ["+Utils.hexString(this.address.getAddress())+"]/["+clientId+"] - Mqtt message of unknown type \"" + msgType+"\" received.");
-			break;				
+			break;
 		}
 
 		//construct an "internal" message and put it to dispatcher's queue
@@ -309,7 +307,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 		Message msg = new Message(this.address);
 		msg.setType(Message.MQTT_MSG);
 		msg.setMqttMessage(mqttMsg);
-		this.dispatcher.putMessage(msg);		
+		this.dispatcher.putMessage(msg);
 	}
 
 
@@ -328,7 +326,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 				// ignore it
 			}
 			this.streamOut = null;
-		}	
+		}
 
 		//close the in stream
 		if (this.streamIn != null) {
@@ -338,7 +336,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 				// ignore it
 			}
 			streamIn = null;
-		}	
+		}
 
 		//close the socket
 		if (socket != null) {
@@ -366,7 +364,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 	 */
 	public void setRunning(boolean running) {
 		this.running = running;
-	}	
+	}
 
 	/**
 	 * @param clientId
