@@ -222,19 +222,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 					System.arraycopy(data, 0, mqttsData, 0, mqttsData.length);
 				}
 				
-				
-//start-just for the testing purposes we simulate here a network delay
-//This will NOT be included in the final version
-//				try {
-//					Thread.sleep(10);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-
-				//end
 				decodeMsg(mqttsData,address);
-//			}
 		}catch (IOException ex){
 			ex.printStackTrace();
 			GatewayLogger.log(GatewayLogger.ERROR, "UDPClientInterface - An I/O error occurred while reading from the socket.");

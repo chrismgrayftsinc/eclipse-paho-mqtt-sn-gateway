@@ -57,10 +57,8 @@ import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsUnsuback;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsUnsubscribe;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillMsg;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillMsgReq;
-import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillMsgUpd;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillTopic;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillTopicReq;
-import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsWillTopicUpd;
 import org.eclipse.paho.mqttsn.gateway.timer.TimerService;
 import org.eclipse.paho.mqttsn.gateway.utils.ClientAddress;
 import org.eclipse.paho.mqttsn.gateway.utils.GWParameters;
@@ -123,6 +121,8 @@ public class ClientMsgHandler extends MsgHandler {
   //variables for storing the msgId and topicId that are issued by the gateway
   private UniqueID msgId, localTopicId;
 
+  private int keepAliveTime;
+
 
   /**
    * Constructor of the ClientMsgHandler.
@@ -138,7 +138,7 @@ public class ClientMsgHandler extends MsgHandler {
    * @see org.eclipse.paho.mqttsn.gateway.core.MsgHandler#initialize()
    */
   public void initialize() {
-    brokerInterface = new TCPBrokerInterface(this.clientAddress);
+    brokerInterface = new TCPBrokerInterface(clientAddress);
     brokerInterface.setClientId(clientId);
     timer = TimerService.getInstance();
     dispatcher = Dispatcher.getInstance();
@@ -293,6 +293,11 @@ public class ClientMsgHandler extends MsgHandler {
     log(GatewayLogger.INFO, "Mqtts CONNECT message with \"Will\" = \"" + receivedMsg.isWill()
         + "\" and \"CleanSession\" = \"" + receivedMsg.isCleanSession() + "\" received.");
 
+    if (clientState == ClientState.ASLEEP || clientState == ClientState.AWAKE) {
+      handleConnectAfterSleep();
+      return;
+    }
+
     clientId = receivedMsg.getClientId();
     brokerInterface.setClientId(clientId);
 
@@ -324,6 +329,7 @@ public class ClientMsgHandler extends MsgHandler {
       mqttConnect.setCleanStart(receivedMsg.isCleanSession());
       mqttConnect.setKeepAlive(receivedMsg.getDuration());
       mqttConnect.setClientId(receivedMsg.getClientId());
+      keepAliveTime = receivedMsg.getDuration();
 
       //open a new TCP/IP connection with the broker
       try {
@@ -356,6 +362,14 @@ public class ClientMsgHandler extends MsgHandler {
         GWParameters.getWaitingTime());
   }
 
+  private void handleConnectAfterSleep() {
+    timer.unregister(clientAddress, ControlMessage.SLEEP_TIMEOUT);
+    timer.unregister(clientAddress, ControlMessage.SLEEP_SERVER_PING);
+    clientState = ClientState.CONNECTED;
+    bufferedPublishMessages.forEach(this::handleMqttPublish);
+    bufferedPublishMessages.clear();
+    clientInterface.sendMsg(clientAddress, new MqttsConnack());
+  }
 
   /**
    * The method that handles a Mqtts WILLTOPIC message.
@@ -939,10 +953,10 @@ public class ClientMsgHandler extends MsgHandler {
           .getPredefinedTopicId() + "\" (predefined topid Id) received.");
     } else if (receivedMsg.getTopicIdType() == MqttsMessage.SHORT_TOPIC_NAME) {
       log(GatewayLogger.INFO, "Mqtts UNSUBSCRIBE message with \"TopicId\" = \"" + receivedMsg
-              .getShortTopicName() + "\" (short topic name) received.");
+          .getShortTopicName() + "\" (short topic name) received.");
     } else {
       log(GatewayLogger.WARN, "Mqtts UNSUBSCRIBE message with unknown topicIdType (\"" + receivedMsg
-              .getTopicIdType() + "\") received. The message cannot be processed.");
+          .getTopicIdType() + "\") received. The message cannot be processed.");
       return;
     }
 
@@ -1040,9 +1054,11 @@ public class ClientMsgHandler extends MsgHandler {
    */
   private void handleAwake() {
     // Need to set state first
-    clientState = ClientState.CONNECTED;
+    clientState = ClientState.AWAKE;
     bufferedPublishMessages.forEach(this::handleMqttPublish);
+    bufferedPublishMessages.clear();
     clientInterface.sendMsg(clientAddress, new MqttsPingResp());
+    clientState = ClientState.ASLEEP;
   }
 
 
@@ -1074,15 +1090,23 @@ public class ClientMsgHandler extends MsgHandler {
   private void handleMqttsDisconnect(MqttsDisconnect receivedMsg) {
     log(GatewayLogger.INFO, "Mqtts DISCONNECT message received.");
 
-    if (clientState == ClientState.ASLEEP && receivedMsg.getSleepDuration() > 0) {
-      log(GatewayLogger.INFO, "Mqtts DISCONNECT messsage received.");
+    if (clientState == ClientState.CONNECTED && receivedMsg.getSleepDuration() > 0) {
+      log(GatewayLogger.INFO, "Mqtts sleep messsage received.");
       handleSleep(receivedMsg.getSleepDuration());
       return;
     }
 
-    if (clientState != ClientState.CONNECTED && clientState != ClientState.ASLEEP) {
+    if ((clientState == ClientState.AWAKE || clientState == ClientState.ASLEEP)
+        && receivedMsg.getSleepDuration() > 0) {
+      log(GatewayLogger.INFO, "Updating client sleep duration");
+      updateSleep(receivedMsg.getSleepDuration());
+      return;
+    }
+
+    if (clientState != ClientState.CONNECTED && clientState != ClientState.ASLEEP
+        && clientState != ClientState.AWAKE) {
       log(GatewayLogger.WARN,
-          "Client is not connected. Te received Mqtts DISCONNECT message cannot be processed.");
+          "Client is not connected. The received Mqtts DISCONNECT message cannot be processed.");
       return;
     }
 
@@ -1098,12 +1122,26 @@ public class ClientMsgHandler extends MsgHandler {
   }
 
   /**
-   * Method that handles a disconnect message with set sleep duration
+   * Method that handles a disconnect message with a set sleep duration
    *
    * @param sleepDuration The maximum sleeping duration
    */
   private void handleSleep(int sleepDuration) {
+    clientState = ClientState.ASLEEP;
+    timer.register(clientAddress, ControlMessage.SLEEP_SERVER_PING, keepAliveTime);
+    timer.register(clientAddress, ControlMessage.SLEEP_TIMEOUT, sleepDuration);
+    clientInterface.sendMsg(clientAddress, new MqttsDisconnect());
+  }
 
+  /**
+   * Method that handles updating the sleep duration to the set sleep durations
+   *
+   * @param sleepDuration The maximum sleep duration
+   */
+  private void updateSleep(int sleepDuration) {
+    timer.unregister(clientAddress, ControlMessage.SLEEP_TIMEOUT);
+    timer.register(clientAddress, ControlMessage.SLEEP_TIMEOUT, sleepDuration);
+    clientInterface.sendMsg(clientAddress, new MqttsDisconnect());
   }
 
   /* (non-Javadoc)
@@ -1213,7 +1251,7 @@ public class ClientMsgHandler extends MsgHandler {
       return;
     }
 
-    if (clientState != ClientState.CONNECTED) {
+    if (clientState != ClientState.CONNECTED && clientState != ClientState.AWAKE) {
       log(GatewayLogger.WARN,
           "Client is not connected. The received Mqtt PUBLISH message cannot be processed.");
       return;
@@ -1597,6 +1635,12 @@ public class ClientMsgHandler extends MsgHandler {
    */
   private void handleMqttPingResp(MqttPingResp receivedMsg) {
     log(GatewayLogger.INFO, "Mqtt PINGRESP message received.");
+
+    if (clientState == ClientState.ASLEEP || clientState == ClientState.AWAKE) {
+      log(GatewayLogger.INFO, "Client is asleep or awake, ignoring Mqtt PINGRESP");
+      return;
+    }
+
     if (clientState != ClientState.CONNECTED) {
       log(GatewayLogger.WARN,
           "Client is not connected. The received Mqtt PINGRESP message cannot be processed.");
@@ -1641,11 +1685,13 @@ public class ClientMsgHandler extends MsgHandler {
         break;
 
       case ControlMessage.SLEEP_TIMEOUT:
-        // TODO:
+        // This indicates that the client has not had connect with the server for its entire sleep duration
+        sendClientDisconnect();
         break;
 
       case ControlMessage.SLEEP_SERVER_PING:
-        // TODO:
+        log(GatewayLogger.INFO, "Sending Mqtt PINGREQ for sleeping client");
+        sendMessageToBroker(new MqttPingReq(), "PINGREQ");
         break;
 
       default:
@@ -1662,10 +1708,16 @@ public class ClientMsgHandler extends MsgHandler {
   private void connectionLost() {
     log(GatewayLogger.INFO, "Control CONNECTION_LOST message received");
 
-    if (clientState != ClientState.CONNECTED) {
+    if (clientState != ClientState.CONNECTED && clientState != ClientState.AWAKE
+        && clientState != ClientState.ASLEEP) {
       log(GatewayLogger.WARN,
           "Client is not connected. The call on connectionLost() method has no effect.");
       return;
+    }
+
+    if (clientState != ClientState.CONNECTED) {
+      log(GatewayLogger.ERROR,
+          "TCP/IP connection with the broker was lost while asleep. Should not happen unless the broker has gone down");
     }
 
     log(GatewayLogger.ERROR, "TCP/IP connection with the broker was lost.");
@@ -1779,6 +1831,11 @@ public class ClientMsgHandler extends MsgHandler {
    */
   private void handleCheckInactivity() {
     log(GatewayLogger.INFO, "Control CHECK_INACTIVITY message received.");
+
+    if (clientState == ClientState.ASLEEP || clientState == ClientState.AWAKE) {
+      log(GatewayLogger.INFO, "Client is asleep, CHECK_INACTIVITY message ignored");
+      return;
+    }
 
     if (System.currentTimeMillis() > timeout) {
       log(GatewayLogger.WARN,

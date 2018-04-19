@@ -22,6 +22,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.paho.mqttsn.gateway.core.Dispatcher;
 import org.eclipse.paho.mqttsn.gateway.core.GatewayMsgHandler;
 import org.eclipse.paho.mqttsn.gateway.exceptions.MqttsException;
@@ -134,6 +135,7 @@ public class Gateway {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		PropertyConfigurator.configure("log4j.properties");
 		String fileName = "gateway.properties";
 		if (args.length > 0) fileName = args[0];
 		Gateway gateway = new Gateway();

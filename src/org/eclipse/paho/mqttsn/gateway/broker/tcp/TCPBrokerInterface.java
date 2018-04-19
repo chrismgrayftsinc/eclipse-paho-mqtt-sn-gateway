@@ -199,18 +199,6 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 				streamIn.readFully(body, hdr.headerLength, hdr.remainingLength);
 			}
 
-
-			//start:just for the testing purposes we simulate here a network delay
-			//TODO This will NOT be included in the final version
-			try {
-				Thread.sleep(20);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			//end
-
-
 			if(body!=null)
 				decodeMsg(body);
 		}catch(IOException e){
