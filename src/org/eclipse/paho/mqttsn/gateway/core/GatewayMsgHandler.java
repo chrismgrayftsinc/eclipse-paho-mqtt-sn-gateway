@@ -19,6 +19,7 @@ package org.eclipse.paho.mqttsn.gateway.core;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.eclipse.paho.mqttsn.gateway.Gateway;
 import org.eclipse.paho.mqttsn.gateway.broker.tcp.TCPBrokerInterface;
 import org.eclipse.paho.mqttsn.gateway.client.ClientInterface;
 import org.eclipse.paho.mqttsn.gateway.exceptions.MqttsException;
@@ -92,8 +93,8 @@ public class GatewayMsgHandler extends MsgHandler {
           Utils.hexString(GWParameters.getGatewayAddress().getAddress()) +
           "]/[" + clientId + "] - Failed to establish TCP/IP connection with " +
           GWParameters.getBrokerURL() + ". Gateway cannot start.");
-      System.exit(1);
-
+      Gateway.shutDown();
+      return;
     }
     GatewayLogger.info("GatewayMsgHandler [" +
         Utils.hexString(GWParameters.getGatewayAddress().getAddress()) +
@@ -466,7 +467,8 @@ public class GatewayMsgHandler extends MsgHandler {
           Utils.hexString(GWParameters.getGatewayAddress().getAddress()) +
           "]/[" + clientId
           + "] - Mqtt connection with the broker cannot be established. Gateway cannot start.");
-      System.exit(1);
+      Gateway.shutDown();
+      return;
     }
 
     //the connection was accepted by the broker
@@ -525,7 +527,8 @@ public class GatewayMsgHandler extends MsgHandler {
           "GatewayMsgHandler [" + Utils.hexString(GWParameters.getGatewayAddress().getAddress())
               + "]/[" + clientId
               + "] - Failed to initialize at least one Client interface.Gateway cannot start.");
-      System.exit(1);
+      Gateway.shutDown();
+      return;
     }
 
     GWParameters.setClientInterfacesVector(clientInterfacesVector);
@@ -740,7 +743,7 @@ public class GatewayMsgHandler extends MsgHandler {
           "GatewayMsgHandler [" + Utils.hexString(GWParameters.getGatewayAddress().getAddress())
               + "]/[" + clientId
               + "] - Failed to establish Mqtt connection with the broker.Gateway cannot start.");
-      System.exit(1);
+      Gateway.shutDown();
     }
   }
 
@@ -792,6 +795,9 @@ public class GatewayMsgHandler extends MsgHandler {
 
     //close the connection with the broker
     brokerInterface.disconnect();
+    if (clientInterfacesVector != null) {
+      clientInterfacesVector.forEach(ClientInterface::stop);
+    }
   }
 
   /******************************************************************************************/
@@ -834,7 +840,7 @@ public class GatewayMsgHandler extends MsgHandler {
           Utils.hexString(GWParameters.getGatewayAddress().getAddress()) +
           "]/[" + clientId
           + "] - Failed to establish Mqtt connection with the broker. Gateway cannot start.");
-      System.exit(1);
+      Gateway.shutDown();
     }
   }
 

@@ -56,4 +56,9 @@ public interface ClientInterface {
 	 * @param msg The Mqtt message to be broadcasted.
 	 */
 	public void broadcastMsg(int radius, MqttsMessage msg);
+
+	/**
+	 * The method stops the client interface
+	 */
+	public void stop();
 }

@@ -53,7 +53,7 @@ public class Gateway {
 		} catch (MqttsException e) {
 			e.printStackTrace();
 			GatewayLogger.error("Failed to load Gateway parameters. Gateway cannot start.");
-			System.exit(1);
+			return;
 		}
 		GatewayLogger.info("Gateway paremeters loaded.");
 
@@ -78,7 +78,8 @@ public class Gateway {
 		} catch (UnknownHostException e) {			
 			e.printStackTrace();
 			GatewayLogger.error("Failed to create the address of the Gateway.Gateway cannot start.");
-			System.exit(1);
+			shutDown();
+			return;
 		}
 
 		int port = GWParameters.getUdpPort();

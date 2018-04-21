@@ -95,6 +95,13 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 		}
 	}
 
+	public void stop() {
+		running = false;
+		readThread.interrupt();
+		// Will throw an error, but is the only way to interrupt an udpSocket
+		udpSocket.close();
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.paho.mqttsn.gateway.client.ClientInterface#broadcastMsg(org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsMessage)
 	 */
@@ -527,6 +534,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 		while (running) {
 			readMsg();
 		}
+		GatewayLogger.log(GatewayLogger.INFO, "Client interface shutting down");
 	}
 
 

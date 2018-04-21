@@ -334,6 +334,9 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 			}
 			socket = null;
 		}
+		if (readThread != null) {
+			readThread.interrupt();
+		}
 	}
 
 
@@ -344,6 +347,7 @@ public class TCPBrokerInterface implements BrokerInterface, Runnable {
 		while (running) {
 			readMsg();
 		}
+		GatewayLogger.log(GatewayLogger.INFO, "Broker interface shutting down");
 	}
 
 

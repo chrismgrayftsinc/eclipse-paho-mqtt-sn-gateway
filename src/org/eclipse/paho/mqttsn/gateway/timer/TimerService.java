@@ -25,6 +25,7 @@ import org.eclipse.paho.mqttsn.gateway.messages.Message;
 import org.eclipse.paho.mqttsn.gateway.messages.control.ControlMessage;
 //import org.eclipse.paho.mqttsn.gateway.timer.TimerService.TimeoutTimerTask;
 import org.eclipse.paho.mqttsn.gateway.utils.Address;
+import org.eclipse.paho.mqttsn.gateway.utils.GatewayLogger;
 
 
 public class TimerService {
@@ -116,6 +117,11 @@ public class TimerService {
 					timeout.cancel();
 			}
 		}		
+	}
+
+	public void stop() {
+		GatewayLogger.log(GatewayLogger.INFO, "Stopping timer service");
+	  timer.cancel();
 	}
 	
 

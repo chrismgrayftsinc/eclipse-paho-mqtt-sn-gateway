@@ -25,6 +25,7 @@ import org.eclipse.paho.mqttsn.gateway.messages.Message;
 import org.eclipse.paho.mqttsn.gateway.messages.control.ControlMessage;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtt.MqttMessage;
 import org.eclipse.paho.mqttsn.gateway.messages.mqtts.MqttsMessage;
+import org.eclipse.paho.mqttsn.gateway.timer.TimerService;
 import org.eclipse.paho.mqttsn.gateway.utils.Address;
 import org.eclipse.paho.mqttsn.gateway.utils.ClientAddress;
 //import org.eclipse.paho.mqttsn.gateway.utils.GWParameters;
@@ -257,7 +258,9 @@ public class Dispatcher implements Runnable{
 
 		if(msg.getMsgType() == ControlMessage.SHUT_DOWN){
 			GatewayLogger.info("-------- Mqtts Gateway stopped --------");
-			System.exit(0);
+			TimerService.getInstance().stop();
+			running = false;
+			readingThread.interrupt();
 		}
 	}
 
@@ -298,7 +301,7 @@ public class Dispatcher implements Runnable{
 	/**
 	 * The method that removes an MsgHandler from the mapping table.
 	 * 
-	 * @param addr The address of the handler
+	 * @param address The address of the handler
 	 */
 	public void removeHandler(Address address) {
 		Iterator<Address> iter  =  handlerTable.keySet().iterator();
@@ -332,6 +335,7 @@ public class Dispatcher implements Runnable{
 	public void run() {
 		while(running){
 			dispatch();
-		}		
+		}
+		GatewayLogger.log(GatewayLogger.INFO, "Dispatcher shutting down");
 	}
 }
