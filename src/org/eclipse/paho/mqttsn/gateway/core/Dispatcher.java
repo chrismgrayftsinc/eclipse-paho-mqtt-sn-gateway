@@ -261,6 +261,7 @@ public class Dispatcher implements Runnable{
 			TimerService.getInstance().stop();
 			running = false;
 			readingThread.interrupt();
+			instance = null;
 		}
 	}
 

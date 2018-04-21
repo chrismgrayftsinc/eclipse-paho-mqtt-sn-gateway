@@ -122,6 +122,7 @@ public class TimerService {
 	public void stop() {
 		GatewayLogger.log(GatewayLogger.INFO, "Stopping timer service");
 	  timer.cancel();
+	  instance = null;
 	}
 	
 
