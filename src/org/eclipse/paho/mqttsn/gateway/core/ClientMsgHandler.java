@@ -611,7 +611,7 @@ public class ClientMsgHandler extends MsgHandler {
 
     //if there is already a publish procedure from the client with QoS 1 and the
     //gateway is expecting a Mqtt PUBACK from the broker, then drop the message if it has QoS 1
-    if (gateway.isWaitingPuback() && receivedMsg.getQos() == 1) {
+    if (gateway.isWaitingPuback() && (receivedMsg.getQos() == 1 || receivedMsg.getQos() == 2)) {
       log(GatewayLogger.WARN,
           "Client is already in a publish procedure with \"QoS\" = \"1\". The received Mqtts PUBLISH message with \"QoS\" = \""
               + receivedMsg.getQos() + "\" cannot be processed.");
@@ -723,12 +723,10 @@ public class ClientMsgHandler extends MsgHandler {
     log(GatewayLogger.INFO, "Sending Mqtt PUBLISH message with \"QoS\" = \"" + receivedMsg.getQos()
         + "\" and \"TopicName\" = \"" + publish.getTopicName() + "\" to the broker.");
     if (sendMessageToBroker(publish, "PUBLISH")) {
-      if (receivedMsg.getQos() == 1) {
+      if (receivedMsg.getQos() == 1 || receivedMsg.getQos() == 2) {
         gateway.setWaitingPuback();
         mqttsPublish = receivedMsg;
       }
-
-      // if (receivedMsg.getQos() == 2)
     }
   }
 
