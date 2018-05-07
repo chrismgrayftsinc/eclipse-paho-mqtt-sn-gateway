@@ -88,4 +88,19 @@ public abstract class MqttsMessage {
 	public void setMsgType(int msgType) {
 		this.msgType = msgType;
 	}
+
+	public static int getLength(byte[] data) {
+		return data[0] == 0x01 ? ((data[1] & 0x00ff) << 8) + (data[2] & 0x00ff) : data[0] & 0x00ff;
+	}
+
+	public static byte[] setLength(byte[] data, int length) {
+		if (length > 255) {
+			data[0] = 0x01;
+			data[1] = (byte) ((length >> 8) & 0xff);
+			data[2] = (byte) (length & 0xff);
+		} else {
+			data[0] = (byte) (length & 0xff);
+		}
+		return data;
+	}
 }

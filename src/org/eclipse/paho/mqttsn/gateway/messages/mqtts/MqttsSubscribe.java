@@ -56,44 +56,45 @@ public class MqttsSubscribe extends MqttsMessage {
 	 * @throws MqttsException 
 	 */	
 	public MqttsSubscribe(byte[] data) throws MqttsException {
+		int length = getLength(data);
+		int headerLength = data[0] == 0x01 ? 7 : 5;
 		msgType = MqttsMessage.SUBSCRIBE;
-		dup = ((data[2] & 0x80) >> 7 != 0);
-		qos = (data[2] & 0x60) >> 5;
+		dup = ((data[headerLength - 3] & 0x80) >> 7 != 0);
+		qos = (data[headerLength - 3] & 0x60) >> 5;
 		if(qos == 4) qos = -1;
-		topicIdType = (data[2] & 0x03);		
-		msgId   = ((data[3] & 0xFF) << 8) + (data[4] & 0xFF);
-		
-		int length = (data[0] & 0xFF)-5;
-		byteTopicId = new byte[length];
+		topicIdType = (data[headerLength - 3] & 0x03);
+		msgId   = ((data[headerLength - 2] & 0xFF) << 8) + (data[headerLength - 1] & 0xFF);
+
+		int topicLength = length - headerLength;
+		byteTopicId = new byte[topicLength];
 
 		try {
 			switch (topicIdType){
 				case MqttsMessage.TOPIC_NAME:
-					System.arraycopy(data, 5, byteTopicId, 0, length);
+					System.arraycopy(data, headerLength, byteTopicId, 0, topicLength);
 					topicName = new String(byteTopicId,Utils.STRING_ENCODING);
 					break;
-					
+
 				case MqttsMessage.PREDIFINED_TOPIC_ID:
 					if(length != 2){
 						throw new MqttsException("Wrong format. Predefined topic id must be 2 bytes long.");
 					}
-					byteTopicId[0] = data[5];
-					byteTopicId[1] = data[6];
+					byteTopicId[0] = data[headerLength];
+					byteTopicId[1] = data[headerLength + 1];
 					predefinedTopicId = ((byteTopicId[0] & 0xFF) << 8) + (byteTopicId[1] & 0xFF);
 					break;
 				case MqttsMessage.SHORT_TOPIC_NAME:
-					if(length != 2)
+					if(topicLength != 2)
 						throw new MqttsException("Wrong format. Short topic name must be 2 bytes long.");
-					System.arraycopy(data, 5, byteTopicId, 0, byteTopicId.length);
+					System.arraycopy(data, headerLength, byteTopicId, 0, byteTopicId.length);
 					shortTopicName = new String(byteTopicId,Utils.STRING_ENCODING);
 					break;
-				
+
 				default:
 					throw new MqttsException("Unknown topic id type: " + topicIdType);
 			}
-		
+
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -107,11 +108,11 @@ public class MqttsSubscribe extends MqttsMessage {
 		int flags = 0;
 		if(dup) {
 			flags |= 0x80;
-		}		
+		}
 		if(qos == -1) {
 			flags |= 0x60; //TODO check if this is right
 		} else if(qos == 0) {
-		
+
 		} else if(qos == 1) {
 			flags |= 0x20;
 		} else if(qos == 2) {
@@ -134,16 +135,16 @@ public class MqttsSubscribe extends MqttsMessage {
 		}else {
 			throw new IllegalArgumentException("Unknown topic id type: " + topicIdType);
 		}
-		
-		int length = 5 + byteTopicId.length;	
-		byte[] data = new byte[length];
-		data[0] = (byte)length;   
-		data[1] = (byte)msgType;
-		data[2] = (byte)flags; 
-		data[3] = (byte)((msgId >> 8) & 0xFF);
-		data[4] = (byte) (msgId & 0xFF);
-		System.arraycopy(byteTopicId, 0, data, 5, byteTopicId.length);		
-		return data;		
+
+		int headerLength = byteTopicId.length + 5 > 255 ? 7 : 5;
+		int length = headerLength + byteTopicId.length;
+		byte[] data = setLength(new byte[length], length);
+		data[headerLength - 4] = (byte)msgType;
+		data[headerLength - 3] = (byte)flags;
+		data[headerLength - 2] = (byte)((msgId >> 8) & 0xFF);
+		data[headerLength - 1] = (byte) (msgId & 0xFF);
+		System.arraycopy(byteTopicId, 0, data, headerLength, byteTopicId.length);
+		return data;
 	}
 
 	public boolean isDup() {

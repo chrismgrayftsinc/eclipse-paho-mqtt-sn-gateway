@@ -225,7 +225,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 					System.arraycopy(a1, 0, clAddr, 0, a1.length);
 					System.arraycopy(a2, 0, clAddr, a1.length, a2.length);
 					address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), false, null);
-					mqttsData = new byte[(int)data[0]];
+					mqttsData = new byte[MqttsMessage.getLength(data)];
 					System.arraycopy(data, 0, mqttsData, 0, mqttsData.length);
 				}
 				
@@ -264,18 +264,17 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 
 		}
 
-		if(data[0] < GWParameters.getMinMqttsLength()) {
+		if(MqttsMessage.getLength(data) < GWParameters.getMinMqttsLength()) {
 			GatewayLogger.log(GatewayLogger.WARN, "UDPClientInterface - Not a valid Mqtts message. Field \"Length\" in the received data packet is less than "+GWParameters.getMinMqttsLength()+" . The packet cannot be processed.");
 			return;
 		}
 
-		if(data[0] != data.length) {
+		if(MqttsMessage.getLength(data) != data.length) {
 			GatewayLogger.log(GatewayLogger.WARN, "UDPClientInterface - Not a valid Mqtts message. Field \"Length\" in the received data packet does not match the actual length of the packet. The packet cannot be processed.");
 			return;
 		}
 
-
-		int msgType = (data[1] & 0xFF);
+		int msgType = data[0] == 1 ? data[3] & 0xFF : data[1] & 0xFF;
 		switch (msgType) {
 		case MqttsMessage.ADVERTISE:
 			if(data.length != 5) {

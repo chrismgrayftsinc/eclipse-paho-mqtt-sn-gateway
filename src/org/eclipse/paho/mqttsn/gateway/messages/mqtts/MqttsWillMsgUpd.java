@@ -42,11 +42,12 @@ public class MqttsWillMsgUpd extends MqttsMessage {
 	 * @param data: The buffer that contains the WILLMSGUPD message.
 	 */
 	public MqttsWillMsgUpd(byte[] data) {
+		int length = getLength(data);
+		int headerLength = data[0] == 0x01 ? 4 : 2;
 		msgType = MqttsMessage.WILLMSGUPD;
 		try {
-			willMsg = new String(data, 2, data[0] - 2, Utils.STRING_ENCODING);
+			willMsg = new String(data, headerLength, length - headerLength, Utils.STRING_ENCODING);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -56,12 +57,12 @@ public class MqttsWillMsgUpd extends MqttsMessage {
 	 * @return A byte array containing the WILLMSGRUPD message as it should appear on the wire.
 	 */
 	public byte[] toBytes(){
-		int length = 2 + willMsg.length();
-		byte[] data = new byte[length];
-		data[0] = (byte)length;   
-		data[1] = (byte)msgType;  
-		System.arraycopy(willMsg.getBytes(), 0, data, 2, willMsg.length());	
-		return data;		
+		int headerLength = willMsg.length() + 2 > 255 ? 4 : 2;
+		int length = willMsg.length() + headerLength;
+		byte[] data = setLength(new byte[length], length);
+		data[headerLength - 1] = (byte)msgType;
+		System.arraycopy(willMsg.getBytes(), 0, data, headerLength, willMsg.length());
+		return data;
 	}
 
 	public String getWillMsg() {

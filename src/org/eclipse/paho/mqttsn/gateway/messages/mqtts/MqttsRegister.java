@@ -44,16 +44,18 @@ public class MqttsRegister extends MqttsMessage {
 	 * @param data: The buffer that contains the REGISTER message.
 	 */	
 	public MqttsRegister(byte[] data) {
+		int length = getLength(data);
+		int headerLength = data[0] == 0x01 ? 8 : 6;
 		msgType = MqttsMessage.REGISTER;
-		topicId = 0;//send by the client
-		msgId = ((data[4] & 0xFF) << 8) + (data[5] & 0xFF);
-		int tlen = (data[0] & 0xFF) - 6;
-		byte[] byteTopicName = new byte[tlen];
-		System.arraycopy(data, 6, byteTopicName, 0, tlen);
+		topicId = 0;//send by the client  hlt: ???
+		//hlt 6.3.08
+		topicId= ((data[headerLength - 4] & 0xFF) << 8) + (data[headerLength - 3] & 0xFF);
+		msgId = ((data[headerLength - 2] & 0xFF) << 8) + (data[headerLength - 1] & 0xFF);
+		byte[] byteTopicName = new byte[length - headerLength];
+		System.arraycopy(data, headerLength, byteTopicName, 0, length - headerLength);
 		try {
 			topicName = new String(byteTopicName, Utils.STRING_ENCODING);
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -63,15 +65,18 @@ public class MqttsRegister extends MqttsMessage {
 	 * @return A byte array containing the REGISTER message as it should appear on the wire.
 	 */
 	public byte[] toBytes() {
-		int length = 6 + topicName.length();
-		byte[] data = new byte[length];
-		data[0] = (byte)length;   
-		data[1] = (byte)msgType;  
-		data[2] = (byte)((topicId >> 8) & 0xFF);
-		data[3] = (byte)(topicId & 0xFF);
-		data[4] = (byte)((msgId >> 8) & 0xFF);
-		data[5] = (byte)(msgId & 0xFF);
-		System.arraycopy(topicName.getBytes(), 0, data, 6, topicName.length());		
+		int headerLength = 6;
+		if (headerLength + topicName.length() > 255) {
+			headerLength += 2;
+		}
+		int length = headerLength + topicName.length();
+		byte[] data = setLength(new byte[length], length);
+		data[headerLength - 5] = (byte)msgType;
+		data[headerLength - 4] = (byte)((topicId >> 8) & 0xFF);
+		data[headerLength - 3] = (byte)(topicId & 0xFF);
+		data[headerLength - 2] = (byte)((msgId >> 8) & 0xFF);
+		data[headerLength - 1] = (byte)(msgId & 0xFF);
+		System.arraycopy(topicName.getBytes(), 0, data, headerLength, topicName.length());
 		return data;
 	}
 			

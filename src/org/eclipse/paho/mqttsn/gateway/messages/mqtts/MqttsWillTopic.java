@@ -43,14 +43,15 @@ public class MqttsWillTopic extends MqttsMessage {
 	 * @param data: The buffer that contains the WILLTOPIC message.
 	 */
 	public MqttsWillTopic(byte[] data) {
+		int length = getLength(data);
+		int headerLength = data[0] == 0x01 ? 5 : 3;
 		msgType = MqttsMessage.WILLTOPIC;
-		if (data.length > 3){ //non empty WILLTOPIC message
-			qos = (data[2] & 0x60) >> 5;
-			retain = ((data[2] & 0x10) >> 4 != 0);
+		if (length > headerLength){ //non empty WILLTOPIC message
+			qos = (data[headerLength - 1] & 0x60) >> 5;
+			retain = ((data[headerLength - 1] & 0x10) >> 4 != 0);
 			try {
-				willTopic = new String(data, 3, data[0] - 3, Utils.STRING_ENCODING);
+				willTopic = new String(data, headerLength, length - headerLength, Utils.STRING_ENCODING);
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -62,13 +63,14 @@ public class MqttsWillTopic extends MqttsMessage {
 	 * (Don't needed in the GW)
 	 */
 	public byte[] toBytes(){
-		int length = 3 + willTopic.length();
-		byte[] data = new byte[length];
+		int headerLength = willTopic.length() + 3 > 255 ? 5 : 3;
+		int length = headerLength + willTopic.length();
+		byte[] data = setLength(new byte[length], length);
 		int flags = 0;
 		if(qos == -1) {
-			flags |= 0x60; 
+			flags |= 0x60;
 		} else if(qos == 0) {
-		
+
 		} else if(qos == 1) {
 			flags |= 0x20;
 		} else if(qos == 2) {
@@ -80,10 +82,9 @@ public class MqttsWillTopic extends MqttsMessage {
 			flags |= 0x10;
 		}
 
-		data[0] = (byte)length;   
-		data[1] = (byte)msgType;  
-		data[2] = (byte)flags;
-		System.arraycopy(willTopic.getBytes(), 0, data, 3, willTopic.length());	
+		data[headerLength - 2] = (byte)msgType;
+		data[headerLength - 1] = (byte)flags;
+		System.arraycopy(willTopic.getBytes(), 0, data, headerLength, willTopic.length());
 		return data;
 	}
 
