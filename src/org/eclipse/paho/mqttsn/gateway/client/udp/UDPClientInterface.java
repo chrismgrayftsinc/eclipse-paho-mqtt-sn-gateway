@@ -68,7 +68,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 	private Thread readThread;
 	private Vector<Forwarder> forwarders;
 	private Dispatcher dispatcher;
-	private byte[] recData = new byte[512];
+	private byte[] recData = new byte[65635];
 
 
 	/**
