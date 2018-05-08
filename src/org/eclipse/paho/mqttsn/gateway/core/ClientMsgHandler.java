@@ -611,7 +611,8 @@ public class ClientMsgHandler extends MsgHandler {
 
     //if there is already a publish procedure from the client with QoS 1 and the
     //gateway is expecting a Mqtt PUBACK from the broker, then drop the message if it has QoS 1
-    if (gateway.isWaitingPuback() && (receivedMsg.getQos() == 1 || receivedMsg.getQos() == 2)) {
+    if (gateway.isWaitingPuback() && receivedMsg.getQos() == 1 || receivedMsg.getQos() == 2 && (
+        gateway.isWaitingPubRec() || gateway.isWaitingPubComp())) {
       log(GatewayLogger.WARN,
           "Client is already in a publish procedure with \"QoS\" = \"1\". The received Mqtts PUBLISH message with \"QoS\" = \""
               + receivedMsg.getQos() + "\" cannot be processed.");
@@ -723,10 +724,12 @@ public class ClientMsgHandler extends MsgHandler {
     log(GatewayLogger.INFO, "Sending Mqtt PUBLISH message with \"QoS\" = \"" + receivedMsg.getQos()
         + "\" and \"TopicName\" = \"" + publish.getTopicName() + "\" to the broker.");
     if (sendMessageToBroker(publish, "PUBLISH")) {
-      if (receivedMsg.getQos() == 1 || receivedMsg.getQos() == 2) {
+      if (receivedMsg.getQos() == 1) {
         gateway.setWaitingPuback();
-        mqttsPublish = receivedMsg;
+      } else if (receivedMsg.getQos() == 2) {
+        gateway.setWaitingPubRec();
       }
+      mqttsPublish = receivedMsg;
     }
   }
 
@@ -815,6 +818,25 @@ public class ClientMsgHandler extends MsgHandler {
       sendClientDisconnect();
       return;
     }
+
+    if (!gateway.isWaitingPubRel()) {
+      log(GatewayLogger.WARN, "Gateway is not waiting in the correct state to receive a PUBREL message");
+    }
+
+    if (mqttsPublish == null) {
+      log(GatewayLogger.WARN,
+          "Stored MQTTS PUBLISH message is null. Cannot process received MQTTS PUBREL message");
+      gateway.resetWaitingPubRel();
+      return;
+    }
+
+    if (mqttsPublish.getMsgId() != receivedMsg.getMsgId()) {
+      log(GatewayLogger.WARN,
+          "Store MQTTS PUBLISH message has a different message ID than the received MQTTS PUBREL message. PUBREL message cannot be processed.");
+    }
+
+    gateway.resetWaitingPubRel();
+    gateway.setWaitingPubComp();
 
     log(GatewayLogger.INFO, "Sending Mqtt PUBREL message to the broker.");
     sendMessageToBroker(new MqttPubRel(receivedMsg.getMsgId()), "PUBREL");
@@ -1426,6 +1448,28 @@ public class ClientMsgHandler extends MsgHandler {
       return;
     }
 
+    if (!gateway.isWaitingPubRec()) {
+      log(GatewayLogger.WARN,
+          "Gateway is not waiting a MQTT PUBREC message. The received message cannot be processed.");
+      return;
+    }
+
+    if (mqttsPublish == null) {
+      log(GatewayLogger.WARN,
+          "The stored MQTTS PUBLISH message is null. The received MQTT PUBREC message cannot be processed");
+      gateway.resetWaitingPubRec();
+      return;
+    }
+
+    if (receivedMsg.getMsgId() != mqttsPublish.getMsgId()) {
+      log(GatewayLogger.WARN,
+          "Message ID of the received Mqtt PUBREC does not match the message ID of the stored Mqtts PUBLISH message. The message cannot be processed.");
+      return;
+    }
+
+    gateway.resetWaitingPubRec();
+    gateway.setWaitingPubRel();
+
     log(GatewayLogger.INFO, "Sending Mqtts PUBREC message to the client.");
     clientInterface.sendMsg(this.clientAddress, new MqttsPubRec(receivedMsg.getMsgId()));
   }
@@ -1462,6 +1506,28 @@ public class ClientMsgHandler extends MsgHandler {
           "Client is not connected. The received Mqtt PUBCOMP message cannot be processed.");
       return;
     }
+
+    if (!gateway.isWaitingPubComp()) {
+      log(GatewayLogger.WARN,
+          "Gateway is not waiting a MQTT PUBCOMP message. The received message cannot be processed.");
+      return;
+    }
+
+    if (mqttsPublish == null) {
+      log(GatewayLogger.WARN,
+          "The stored MQTTS PUBLISH message is null. The received MQTT PUBCOMP message cannot be processed");
+      gateway.resetWaitingPubComp();
+      return;
+    }
+
+    if (receivedMsg.getMsgId() != mqttsPublish.getMsgId()) {
+      log(GatewayLogger.WARN,
+          "Message ID of the received Mqtt PUBCOMP does not match the message ID of the stored Mqtts PUBLISH message. The message cannot be processed.");
+      return;
+    }
+
+    mqttsPublish = null;
+    gateway.resetWaitingPubComp();
 
     log(GatewayLogger.INFO, "Sending Mqtts PUBCOMP message to the client");
     clientInterface.sendMsg(clientAddress, new MqttsPubComp(receivedMsg.getMsgId()));

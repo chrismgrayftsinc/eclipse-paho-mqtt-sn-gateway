@@ -10,11 +10,14 @@ class GatewayState {
   private boolean waitingWillTopic;
   private boolean waitingWillMsg;
   private boolean waitingRegack;
+  private boolean waitingPubRel;
 
   //waiting message from the broker
   private boolean waitingSuback;
   private boolean waitingUnsuback;
   private boolean waitingPuback;
+  private boolean waitingPubRec;
+  private boolean waitingPubComp;
 
   //counters
   private int triesSendingWillTopicReq;
@@ -162,5 +165,41 @@ class GatewayState {
 
   public void resetTriesSendingRegister() {
     this.triesSendingRegister = 0;
+  }
+
+  public boolean isWaitingPubComp() {
+    return waitingPubComp;
+  }
+
+  public void setWaitingPubComp() {
+    waitingPubComp = true;
+  }
+
+  public void resetWaitingPubComp() {
+    waitingPubComp = false;
+  }
+
+  public boolean isWaitingPubRec() {
+    return waitingPubRec;
+  }
+
+  public void setWaitingPubRec() {
+    waitingPubRec = true;
+  }
+
+  public void resetWaitingPubRec() {
+    waitingPubRec = false;
+  }
+
+  public boolean isWaitingPubRel() {
+    return waitingPubRel;
+  }
+
+  public void setWaitingPubRel() {
+    waitingPubRel = true;
+  }
+
+  public void resetWaitingPubRel() {
+    waitingPubRel = false;
   }
 }
