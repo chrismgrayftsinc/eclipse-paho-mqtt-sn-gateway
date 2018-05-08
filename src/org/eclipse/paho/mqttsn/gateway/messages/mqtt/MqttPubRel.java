@@ -51,7 +51,7 @@ public class MqttPubRel extends MqttMessage{
 	public byte[] toBytes() {
 		int length = 4;
 		byte[] data = new byte[length];
-		data [0] = (byte)((msgType << 4) & 0xF0);
+		data [0] = (byte)(((msgType << 4) & 0xF0) | 0x02);
 		data [1] = (byte)0x02;//add Remaining length fields
 		data [2] = (byte)((msgId >> 8) & 0xFF);
 		data [3] = (byte) (msgId & 0xFF);
