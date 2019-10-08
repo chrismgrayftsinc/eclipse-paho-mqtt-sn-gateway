@@ -127,7 +127,7 @@ public class MqttsPublish extends MqttsMessage {
 		byteTopicId = new byte[2];
 		if (topicIdType == MqttsMessage.SHORT_TOPIC_NAME)
 			byteTopicId = shortTopicName.getBytes();
-		else if(topicIdType == MqttsMessage.NORMAL_TOPIC_ID){
+		else if(topicIdType == MqttsMessage.NORMAL_TOPIC_ID || topicIdType == MqttsMessage.PREDIFINED_TOPIC_ID){
 			byteTopicId[0] = (byte)((topicId >> 8) & 0xFF);
 			byteTopicId[1] = (byte) (topicId & 0xFF);
 		}else 
