@@ -76,7 +76,7 @@ public class MqttsSubscribe extends MqttsMessage {
 					break;
 
 				case MqttsMessage.PREDIFINED_TOPIC_ID:
-					if(length != 2){
+					if(topicLength != 2){
 						throw new MqttsException("Wrong format. Predefined topic id must be 2 bytes long.");
 					}
 					byteTopicId[0] = data[headerLength];
